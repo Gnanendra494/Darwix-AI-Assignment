@@ -1,0 +1,7 @@
+textblob
+pyttsx3
+fastapi
+uvicorn
+pydub
+pytest
+python-multipart
