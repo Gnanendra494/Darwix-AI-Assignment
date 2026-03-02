@@ -1,8 +1,12 @@
 # Empathy Engine
 
+![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)
+![Python: 3.8+](https://img.shields.io/badge/python-3.8%2B-blue.svg)
+![Tests](https://img.shields.io/badge/tests-pytest-brightgreen.svg)
+
 This project was built from scratch as part of the AI challenge "The Empathy Engine". I wanted a lightweight Python tool that
 could take a string, figure out how it was feeling, and then have a voice say it the "right" way. It's intentionally simple,
-using TextBlob for sentiment so I could focus on the audio behaviour rather than training models.  The engine listens for
+using TextBlob for sentiment so I could focus on the audio behaviour rather than training models. The engine listens for
 positive/negative/neutral cues and adjusts rate and volume so the result feels a little less robotic and a little more like a
 person having a reaction.
 
@@ -82,3 +86,21 @@ Open http://localhost:8000 in your browser, type text, and listen to the respons
 
 ## License
 MIT
+
+## Release
+
+A polished release ZIP is included in the project root as `empathy-engine-v1.0.zip`. It contains the runnable code, tests,
+and a small helper script (`run_and_play.sh`) to regenerate and open the output audio quickly. To unpack locally:
+
+```bash
+unzip empathy-engine-v1.0.zip -d empathy-engine-release
+cd empathy-engine-release
+```
+
+## Changelog
+
+- 1.0 — Initial release
+  - Sentiment-based TTS with intensity scaling
+  - CLI (`src/main.py`) and small web demo (`src/web.py`)
+  - macOS AIFF→WAV conversion for reliable playback
+  - Tests and helper script `run_and_play.sh`
