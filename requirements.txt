@@ -5,3 +5,5 @@ uvicorn
 pydub
 pytest
 python-multipart
+transformers
+torch

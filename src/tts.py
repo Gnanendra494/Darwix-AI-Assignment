@@ -20,16 +20,13 @@ def synthesize_speech(
     emotion: str,
     intensity: float = 0.0,
     filename: str = "output.wav",
+    use_ssml: bool = False,
 ) -> str:
     """Generate speech from text using pyttsx3 and return output filename.
 
-    The `intensity` parameter (0.0 – 1.0) scales how strongly the emotion
-    affects rate and volume. A highly positive sentence will speak faster and
-    louder than a mildly positive one.
-
-    On macOS the pyttsx3 driver produces AIFF files even when given a .wav
-    extension, which most players don't auto-detect. We therefore convert the
-    result using pydub if the desired extension is .wav or .mp3.
+    The `intensity` parameter (0.0 – 1.0) scales how strongly the emotion
+    affects rate and volume. `use_ssml` toggles a small SSML emulation layer
+    (pyttsx3 does not support SSML natively, so emulation is performed).
     """
     engine = pyttsx3.init()
     # compute final properties
@@ -39,9 +36,15 @@ def synthesize_speech(
 
     engine.setProperty("rate", rate)
     engine.setProperty("volume", volume)
+
+    # Basic SSML emulation: transform <break/>, <emphasis>, <prosody> to simple
+    # textual cues that the TTS engine can speak.
+    if use_ssml:
+        text = _emulate_ssml(text)
+
     tmp_output = filename
-    # pyttsx3 writes in the "native" format; we'll always write to a temp file
-    # and then convert if necessary.
+    # pyttsx3 writes in the "native" format; we'll write to an AIFF then
+    # convert on platforms like macOS where the engine outputs AIFF data.
     if filename.lower().endswith(('.wav', '.mp3')):
         tmp_output = filename + '.aiff'
     engine.save_to_file(text, tmp_output)
@@ -58,3 +61,33 @@ def synthesize_speech(
             import os
             os.replace(tmp_output, filename)
     return filename
+
+
+def _emulate_ssml(text: str) -> str:
+    """Lightweight SSML emulation:
+
+    - `<break time="500ms"/>` -> short pause (inserts ellipses)
+    - `<emphasis>word</emphasis>` -> uppercase the word
+    - `<prosody rate="fast">` -> append punctuation to increase energy
+    """
+    import re
+
+    # break tags -> add dots proportional to time
+    def _break_sub(m):
+        ms = int(m.group(1)) if m.group(1) else 250
+        dots = '.' * max(1, ms // 250)
+        return ' ' + dots + ' '
+
+    text = re.sub(r'<break[^>]*time="?(\d+)ms"?\s*/?>', _break_sub, text)
+    # emphasis
+    text = re.sub(r'<emphasis>(.*?)</emphasis>', lambda m: m.group(1).upper(), text)
+
+    # simple prosody handling
+    def _prosody_sub(m):
+        attrs = m.group(1)
+        inner = m.group(2)
+        if 'rate="fast"' in attrs:
+            return inner + '!!'
+        return inner
+    text = re.sub(r'<prosody([^>]*)>(.*?)</prosody>', _prosody_sub, text)
+    return text
